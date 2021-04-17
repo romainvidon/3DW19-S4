@@ -4,7 +4,7 @@ import {
     ColladaObject
 } from './colladaobject.module.js';
 
-let test, scene, renderer, camera, container, pointer, raycaster;
+let test, scene, renderer, camera, pointer, raycaster, wh, duration, curve, clock;
 
 init();
 animate();
@@ -27,7 +27,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     
-    const ambientLight = new THREE.AmbientLight( 0xA0A0A0 ); // soft white light
+    const ambientLight = new THREE.AmbientLight( 0xA0A0A0 ); // douce lumière blanche
     scene.add(ambientLight);
     const light = new THREE.DirectionalLight( 0xffffff, 0.5 );
     scene.add( light );
@@ -41,12 +41,30 @@ function init() {
 
     // objets
     test = new ColladaObject('treeHighCrooked', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', scene);
+    wh = new ColladaObject('roue', 'https://www.impots.gouv.fr/portail/', scene);
+
+    curve = new THREE.EllipseCurve(
+        0,  0,            // ax, aY
+        2, 2,           // xRadius, yRadius
+        0,  2 * Math.PI,  // aStartAngle, aEndAngle
+        true,            // aClockwise
+        0                 // aRotation
+    );
+    clock = new THREE.Clock();
+    duration = 10;
 
     test.events.addEventListener('loaded',(e)=>{
         console.log(test);
         test.scale.x = 2;
         test.scale.y = 2;
         test.scale.z = 2;
+    });
+    wh.events.addEventListener('loaded',(e)=>{
+        console.log(wh);
+        wh.scale.x = 1;
+        wh.scale.y = 1;
+        wh.scale.z = 1;
+        wh.position.x = 3;
     });
 }
 
@@ -89,9 +107,17 @@ function animate() {
     }
 }
 
-function render() {
-    renderer.render(scene, camera);
+function render(time) {    
 
+    //Récup de la position
+    let position = curve.getPoint((clock.getElapsedTime() / duration) % 1);
+    wh.position.x = position.x;
+    wh.position.z = position.y;
+    //console.log(wh.position);
+
+    let rot = ((clock.getElapsedTime() / duration) % 1) * 2 * Math.PI;
+    wh.rotation.y = rot;
+    renderer.render(scene, camera);
 }
 
 function onWindowResize() {
